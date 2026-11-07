@@ -38,8 +38,9 @@ export function Account({ user, onSignOut }: { user: Me; onSignOut: () => void }
   return (
     <div className="max-w-lg space-y-6">
       <section className="sheet">
+        <p className="text-sm text-ink-soft">Signed in as</p>
         <h1 className="text-2xl font-bold">{user.name}</h1>
-        <p className="mt-1 text-sm text-ink-soft">Signed in as {user.username}</p>
+        <p className="mt-1 inline-block rounded-md bg-paper px-2 py-0.5 text-sm font-medium">{user.role === 'researcher' ? 'Researcher' : user.role === 'viewer' ? 'Viewer (read-only)' : 'No access'}</p>
         <p className="mt-3 text-sm">{ROLE_TEXT[user.role]}</p>
         {user.isSuperuser && (
           <a className="btn-ghost btn-sm mt-4" href={(import.meta.env.VITE_ADMIN_URL as string | undefined) ?? '/admin/'} target="_blank" rel="noreferrer">

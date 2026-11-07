@@ -40,6 +40,8 @@ async function detectPhoneModel(): Promise<string> {
   return base;
 }
 
+const ROLE_LABEL: Record<string, string> = { researcher: 'Researcher', viewer: 'Viewer (read-only)', none: 'No access' };
+
 const NAV: { tab: Tab; label: string; researcherOnly?: boolean }[] = [
   { tab: 'collect', label: 'Collect', researcherOnly: true },
   { tab: 'overview', label: 'Overview' },
@@ -173,16 +175,21 @@ export default function App() {
                 </li>
               ))}
             </ul>
-            <div className="mt-auto px-2 text-sm">
+            <div className="mt-auto rounded-lg bg-paper px-3 py-2.5 text-sm">
+              <p className="text-ink-faint">Signed in as</p>
               <p className="font-semibold">{user.name}</p>
-              <p className="capitalize text-ink-faint">{user.role}</p>
+              <p className="text-ink-soft">{ROLE_LABEL[user.role]}</p>
             </div>
           </nav>
           {/* Phone top bar */}
           <header className="sticky top-0 z-30 bg-paper-raised lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
             <div className="flex items-center justify-between px-4 py-2.5">
               <Logo />
-              <span className="text-sm text-ink-faint">{user.username}</span>
+              <span className="text-right text-xs leading-tight text-ink-faint">
+                Signed in as <span className="font-semibold text-ink">{user.name}</span>
+                <br />
+                {ROLE_LABEL[user.role]}
+              </span>
             </div>
             <nav className="flex gap-1 overflow-x-auto px-3 pb-2" aria-label="Main">
               {nav.map((n) => (
