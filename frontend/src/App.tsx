@@ -84,9 +84,13 @@ export default function App() {
     if (user && user.role !== 'none') refreshCalibration();
   }, [user, refreshCalibration]);
 
+  // A participant number is only taken when the researcher presses "Start a new participant",
+  // so opening or browsing the app never uses up numbers.
+  const [startingNow, setStartingNow] = useState(false);
   const startSession = useCallback(async () => {
     if (starting.current) return;
     starting.current = true;
+    setStartingNow(true);
     setStartError('');
     try {
       const [{ id }, phone] = await Promise.all([reserveParticipantId(), detectPhoneModel()]);
@@ -97,12 +101,10 @@ export default function App() {
       setStartError((e as Error).message);
     } finally {
       starting.current = false;
+      setStartingNow(false);
     }
   }, []);
 
-  useEffect(() => {
-    if (isResearcher && tab === 'collect' && !draft) startSession();
-  }, [isResearcher, tab, draft, startSession]);
 
   useEffect(() => {
     if (!(draft && step > 0 && step < 6)) return;
@@ -161,7 +163,7 @@ export default function App() {
   }
 
   function abandon() {
-    if (!confirm(`Abandon ${draft?.id}? The ID will not be reused and will be listed as unused.`)) return;
+    if (!confirm(`Abandon ${draft?.id}? Nothing about this participant will be saved.`)) return;
     setDraft(null);
   }
 
@@ -243,15 +245,13 @@ export default function App() {
           ) : tab === 'account' ? (
             <Account user={user} onSignOut={signOut} />
           ) : !draft ? (
-            <div className="sheet text-center">
-              {startError ? (
-                <>
-                  <p className="note-err text-left">{startError}</p>
-                  <button className="btn-primary mt-4" onClick={startSession}>Try again</button>
-                </>
-              ) : (
-                <p className="text-ink-faint">Getting the next participant ID…</p>
-              )}
+            <div className="sheet">
+              <h1 className="text-2xl font-bold">Ready for the next participant?</h1>
+              <p className="mt-2 text-ink-soft">The app gives them the next number (P001, P002…) when you start. Have the paper consent form ready.</p>
+              {startError && <p className="note-err mt-4">{startError}</p>}
+              <button className="btn-primary mt-5 w-full" disabled={startingNow} onClick={startSession}>
+                {startingNow ? 'Starting…' : 'Start a new participant'}
+              </button>
             </div>
           ) : (
             <>
@@ -273,7 +273,7 @@ export default function App() {
               )}
               {step === 4 && record && <Results record={record} calibrationNote={calNote} onRescan={() => setStep(3)} onNext={() => setStep(5)} />}
               {step === 5 && <Sus values={draft.sus} onChange={(sus) => setDraft({ ...draft, sus })} onSubmit={finish} saving={saving} error={saveError} />}
-              {step === 6 && record?.sus && <Saved id={record.id} susScore={record.sus.score} onNext={() => setDraft(null)} />}
+              {step === 6 && record?.sus && <Saved id={record.id} susScore={record.sus.score} onNext={startSession} />}
               {step > 0 && step < 5 && (
                 <button className="mt-8 w-full text-center text-sm text-ink-faint underline" onClick={abandon}>
                   Abandon this session

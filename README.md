@@ -153,7 +153,7 @@ echo "VITE_MP_MODEL_URL=/models/pose_landmarker_heavy.task" >> .env.local
 
 | Step | Screen | What happens |
 |---|---|---|
-| 1 | Session | Next ID reserved on the server (P001, P002…). "Paper consent form signed and dated" must be ticked. |
+| 1 | Session | Pressing **Start a new participant** takes the next number from the server (P001, P002…). "Paper consent form signed and dated" must be ticked. |
 | 2 | Details | Sex, age band, measured height and weight, size chart, size they usually buy, phone model (auto-detected, editable). |
 | 3 | Tape | Chest/bust, waist, hip, inseam: readings 1 and 2; a 3rd is required when they differ by more than 1.0 cm. Diagram and protocol for each. |
 | 4 | Scan | Camera with silhouette guide and tilt check. Front photo, then side. Rejected if any required landmark visibility < 0.6. |
@@ -161,7 +161,7 @@ echo "VITE_MP_MODEL_URL=/models/pose_landmarker_heavy.task" >> .env.local
 | 6 | Survey | The participant answers the 10-item System Usability Scale. Navigation is hidden while they hold the phone. |
 | 7 | Saved | Record and audit entry written on the server. "Start next participant". |
 
-IDs are never reused. Sessions that were started but not saved appear as **Unused IDs** under Activity.
+A number is taken only when the researcher presses **Start a new participant**, and is never reused. Abandoned sessions save nothing.
 
 ## 4. Dashboard
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { downloadExport, listAudit, listGaps } from '../../lib/api';
+import { downloadExport, listAudit } from '../../lib/api';
 import type { AuditEntry } from '../../types';
 
 const VERB: Record<AuditEntry['action'], string> = {
@@ -12,11 +12,9 @@ const VERB: Record<AuditEntry['action'], string> = {
 
 export function Activity() {
   const [audit, setAudit] = useState<AuditEntry[] | null>(null);
-  const [gaps, setGaps] = useState<{ id: string; reservedAt: string }[]>([]);
   const [error, setError] = useState('');
   useEffect(() => {
     listAudit().then(setAudit, (e) => setError(e.message));
-    listGaps().then(setGaps, () => undefined);
   }, []);
 
   return (
@@ -29,12 +27,6 @@ export function Activity() {
         <button className="btn-ghost btn-sm" disabled={!audit?.length} onClick={() => downloadExport('audit').catch((e) => setError(e.message))}>Download log CSV</button>
       </div>
       {error && <p className="note-err">{error}</p>}
-
-      {gaps.length > 0 && (
-        <section className="note-warn">
-          <strong>Unused IDs:</strong> {gaps.map((g) => g.id).join(', ')}. These sessions were started but never saved. Note them in your study log.
-        </section>
-      )}
 
       <ol className="panel divide-y divide-grid">
         {audit?.length === 0 && <li className="p-4 text-ink-faint">Nothing has happened yet.</li>}
