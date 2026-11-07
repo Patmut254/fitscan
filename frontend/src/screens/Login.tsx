@@ -1,0 +1,48 @@
+import { useState } from 'react';
+import { login, type Me } from '../lib/api';
+import { Logo } from '../components/Logo';
+
+export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      onSignedIn(await login(username.trim(), password));
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto flex min-h-[100svh] max-w-sm flex-col justify-center px-4 py-10">
+      <Logo className="mb-10" />
+      <h1 className="text-3xl font-extrabold leading-tight" style={{ fontStretch: '120%' }}>
+        Scan, tape, compare.
+      </h1>
+      <p className="mt-2 text-ink-soft">Sign in with the study account the admin created for you.</p>
+
+      {/* A strip of tape as the form's top edge: the one decorative element on this page */}
+      <div className="mt-8 h-2 rounded-t-md bg-tape" aria-hidden />
+      <form onSubmit={submit} className="space-y-4 rounded-b-xl border border-t-0 border-grid bg-paper-raised p-5">
+        <div>
+          <label className="label" htmlFor="u">Username</label>
+          <input id="u" className="input" autoComplete="username" autoCapitalize="none" value={username} onChange={(e) => setUsername(e.target.value)} required />
+        </div>
+        <div>
+          <label className="label" htmlFor="p">Password</label>
+          <input id="p" className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </div>
+        {error && <p className="note-err" role="alert">{error}</p>}
+        <button className="btn-primary w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+      </form>
+      <p className="mt-6 text-sm text-ink-faint">Forgot your password? Ask the study admin to reset it in the admin site.</p>
+    </div>
+  );
+}

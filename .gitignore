@@ -1,0 +1,10 @@
+node_modules/
+frontend/dist/
+frontend/public/mediapipe/
+frontend/public/models/*.task
+backend/db.sqlite3
+backend/staticfiles/
+backend/.env
+__pycache__/
+*.pyc
+.env.local

@@ -1,0 +1,33 @@
+{
+  "_note": "ILLUSTRATIVE UK body-measurement charts (cm). Replace with the exact retailer chart your study uses and record which one in your methods. Ranges are [min, max); a value equal to a max belongs to the next size.",
+  "womenswear": {
+    "label": "UK womenswear (dress sizes)",
+    "dims": ["bust", "waist", "hip"],
+    "sizes": [
+      { "size": "4",  "bust": [72, 76],   "waist": [54, 58],   "hip": [79, 83] },
+      { "size": "6",  "bust": [76, 80],   "waist": [58, 62],   "hip": [83, 87] },
+      { "size": "8",  "bust": [80, 84],   "waist": [62, 66],   "hip": [87, 91] },
+      { "size": "10", "bust": [84, 88],   "waist": [66, 70],   "hip": [91, 95] },
+      { "size": "12", "bust": [88, 93],   "waist": [70, 75],   "hip": [95, 100] },
+      { "size": "14", "bust": [93, 98],   "waist": [75, 80],   "hip": [100, 105] },
+      { "size": "16", "bust": [98, 103],  "waist": [80, 85],   "hip": [105, 110] },
+      { "size": "18", "bust": [103, 109], "waist": [85, 91],   "hip": [110, 116] },
+      { "size": "20", "bust": [109, 115], "waist": [91, 97],   "hip": [116, 122] },
+      { "size": "22", "bust": [115, 121], "waist": [97, 103],  "hip": [122, 128] },
+      { "size": "24", "bust": [121, 127], "waist": [103, 109], "hip": [128, 134] }
+    ]
+  },
+  "menswear": {
+    "label": "UK menswear (tops/trousers)",
+    "dims": ["chest", "waist", "hip"],
+    "sizes": [
+      { "size": "XS",  "chest": [81, 86],   "waist": [66, 71],   "hip": [81, 86] },
+      { "size": "S",   "chest": [86, 94],   "waist": [71, 79],   "hip": [86, 94] },
+      { "size": "M",   "chest": [94, 102],  "waist": [79, 87],   "hip": [94, 102] },
+      { "size": "L",   "chest": [102, 110], "waist": [87, 95],   "hip": [102, 110] },
+      { "size": "XL",  "chest": [110, 118], "waist": [95, 103],  "hip": [110, 118] },
+      { "size": "XXL", "chest": [118, 126], "waist": [103, 111], "hip": [118, 126] },
+      { "size": "3XL", "chest": [126, 134], "waist": [111, 119], "hip": [126, 134] }
+    ]
+  }
+}

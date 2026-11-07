@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    /* Faint pattern-paper grid: 1 cm-ish squares */
+    background-image:
+      linear-gradient(to right, rgba(27, 42, 65, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(27, 42, 65, 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  h1, h2, h3 { font-stretch: 112%; letter-spacing: -0.01em; }
+  :focus-visible { outline: 3px solid #F2C230; outline-offset: 2px; }
+  /* Flat design: no shadows anywhere, including browser defaults on phone inputs and buttons. */
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+  input, select, textarea, button { -webkit-appearance: none; appearance: none; }
+  input[type='checkbox'] { -webkit-appearance: auto; appearance: auto; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231B2A41' stroke-width='1.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2.25rem; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  .num { font-variant-numeric: tabular-nums; }
+  .btn { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg px-5 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40; }
+  .btn-primary { @apply btn bg-ink text-white hover:bg-ink/90; }
+  .btn-tape { @apply btn bg-tape text-ink hover:bg-tape-deep hover:text-white; }
+  .btn-ghost { @apply btn border border-grid bg-paper-raised text-ink hover:border-ink-faint; }
+  .btn-sm { @apply min-h-[36px] px-3 text-sm; }
+  .input { @apply w-full rounded-lg border border-grid bg-paper-raised px-3 py-3 text-base text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none focus:ring-0; }
+  .label { @apply mb-1.5 block text-sm font-medium text-ink-soft; }
+  .panel { @apply rounded-xl border border-grid bg-paper-raised; }
+  .sheet { @apply panel p-5; }
+  .seg { @apply min-h-[48px] rounded-lg border px-2 text-sm font-medium transition-colors; }
+  .seg-on { @apply border-ink bg-ink text-white; }
+  .seg-off { @apply border-grid bg-paper-raised text-ink hover:border-ink-faint; }
+  .note-warn { @apply rounded-lg border-l-4 border-tape-deep bg-tape-light px-3 py-2 text-sm text-ink; }
+  .note-err { @apply rounded-lg border-l-4 border-chalk bg-chalk-light px-3 py-2 text-sm text-chalk; }
+  .note-ok { @apply rounded-lg border-l-4 border-sage bg-sage-light px-3 py-2 text-sm text-sage; }
+}
