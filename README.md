@@ -15,11 +15,11 @@ server. Only derived numbers and landmark coordinates are stored.
 
 ## Who can do what
 
-| Account type | Run sessions | See dashboard and records | Correct records | Download CSV | Upload calibration | Admin site |
-|---|---|---|---|---|---|---|
-| **Researcher** (group) | ✓ | ✓ | ✓ (reason required) | ✓ | ✓ | – |
-| **Viewer** (group), e.g. a supervisor | – | ✓ | – | ✓ | – | – |
-| **Superuser** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Account type                          | Run sessions | See dashboard and records | Correct records     | Download CSV | Upload calibration | Admin site |
+| ------------------------------------- | ------------ | ------------------------- | ------------------- | ------------ | ------------------ | ---------- |
+| **Researcher** (group)                | ✓            | ✓                         | ✓ (reason required) | ✓            | ✓                  | –          |
+| **Viewer** (group), e.g. a supervisor | –            | ✓                         | –                   | ✓            | –                  | –          |
+| **Superuser**                         | ✓            | ✓                         | ✓                   | ✓            | ✓                  | ✓          |
 
 Every user can change their own password under **Account**. Changing it signs that account out on other devices.
 Forgotten passwords are reset by a superuser in the admin site (`/admin/` → Users → the user → "Reset password").
@@ -53,12 +53,15 @@ During development Vite forwards `/api` to Django on port 8000.
 Remove them with `python manage.py seed_demo --clear`. Never use this on the live study database.
 
 **Add more accounts**
+
 ```bash
 python manage.py create_user supervisor --role viewer
 ```
-You can also add users in the admin site and put them in the *Researcher* or *Viewer* group.
+
+You can also add users in the admin site and put them in the _Researcher_ or _Viewer_ group.
 
 ### Tests
+
 ```bash
 cd backend && python manage.py test study     # 14 API tests
 cd frontend && npm test                        # 56 unit tests (measurement, sizes, calibration, tape, SUS)
@@ -70,11 +73,11 @@ cd frontend && npm test                        # 56 unit tests (measurement, siz
 
 Phone browsers only allow the camera over **HTTPS**. The setup:
 
-| Part | Host | Why |
-|---|---|---|
-| React app | **Vercel** | Fast, HTTPS, deploys on every `git push`. Forwards `/api/*` to Render (`frontend/vercel.json`), so the browser sees one site. |
-| Django API + admin | **Render** (free web service) | Runs Django with gunicorn, deploys on every push (`render.yaml`). |
-| Database | **Neon** Postgres (free) | Render's free database is deleted after 30 days; Neon's free plan keeps data. |
+| Part               | Host                          | Why                                                                                                                           |
+| ------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| React app          | **Vercel**                    | Fast, HTTPS, deploys on every `git push`. Forwards `/api/*` to Render (`frontend/vercel.json`), so the browser sees one site. |
+| Django API + admin | **Render** (free web service) | Runs Django with gunicorn, deploys on every push (`render.yaml`).                                                             |
+| Database           | **Neon** Postgres (free)      | Render's free database is deleted after 30 days; Neon's free plan keeps data.                                                 |
 
 Push this folder to a **private GitHub repository** first.
 
@@ -89,6 +92,7 @@ files and creates the tables. When it's live, note the address, e.g. `https://fi
 Check `https://fitscan-api.onrender.com/api/health` shows `{"ok": true}`.
 
 **3. Create your account** (PowerShell, in `backend`, using the same Neon string):
+
 ```powershell
 pip install -r requirements.txt
 $env:DATABASE_URL = "postgresql://...paste the Neon string..."
@@ -97,7 +101,8 @@ Remove-Item Env:DATABASE_URL
 ```
 
 **4. Vercel (React app)**
-- In `frontend/vercel.json`, replace `YOUR-BACKEND.onrender.com` with your Render address. Commit and push.
+
+- In `frontend/vercel.json`, replace `` with your Render address. Commit and push.
 - vercel.com → **Add New → Project** → pick the repository → set **Root Directory** to `frontend` → **Deploy**.
 - Optional: in **Settings → Environment Variables** add `VITE_ADMIN_URL` = `https://fitscan-api.onrender.com/admin/`
   so the "Open admin site" button goes to Render, then redeploy.
@@ -105,6 +110,7 @@ Remove-Item Env:DATABASE_URL
 Open `https://YOUR-PROJECT.vercel.app` on the phone and sign in.
 
 **Good to know**
+
 - Render's free server sleeps after 15 minutes without visits and takes about a minute to wake. The app pings
   it as soon as it opens, so **open FitScan a minute before each session**.
 - Neon's free database pauses after 5 idle minutes and wakes in a second or two. Idle data is never deleted.
@@ -115,12 +121,14 @@ Open `https://YOUR-PROJECT.vercel.app` on the phone and sign in.
 ### Alternative: PythonAnywhere (one server, SQLite file)
 
 **On your computer (PowerShell, in the project folder):**
+
 ```powershell
 cd frontend; npm install; npm run build; cd ..
 Compress-Archive -Path backend, frontend\dist -DestinationPath fitscan-deploy.zip -Force
 ```
 
 **On PythonAnywhere:** upload the zip in **Files**, then in a **Bash console**:
+
 ```bash
 mkdir -p ~/fitscan && cd ~/fitscan && unzip -o ~/fitscan-deploy.zip
 mkvirtualenv fitscan --python=python3.12
@@ -130,12 +138,15 @@ nano .env   # DJANGO_DEBUG=false, DJANGO_SECRET_KEY=..., DJANGO_ALLOWED_HOSTS=US
 python manage.py migrate && python manage.py collectstatic --noinput
 python manage.py create_user anita --role researcher --superuser
 ```
+
 **Web** tab → Add a new web app → Manual configuration → Python 3.12; set Virtualenv to
 `/home/USERNAME/.virtualenvs/fitscan`, turn on Force HTTPS, paste `deploy/pythonanywhere_wsgi.py` into the WSGI file, Reload.
 Free apps must be renewed monthly ("Run until 1 month from today").
 
 ### Optional: self-host the pose model
+
 By default the model downloads from Google's storage on the first scan. For weak connections:
+
 ```bash
 cd frontend && npm run fetch-model
 echo "VITE_MP_MODEL_URL=/models/pose_landmarker_heavy.task" >> .env.local
@@ -145,21 +156,21 @@ echo "VITE_MP_MODEL_URL=/models/pose_landmarker_heavy.task" >> .env.local
 
 ## 3. Session flow (phone)
 
-| Step | Screen | What happens |
-|---|---|---|
-| 1 | Session | Next ID reserved on the server (P001, P002…). "Paper consent form signed and dated" must be ticked. |
-| 2 | Details | Sex, age band, measured height and weight, size chart, size they usually buy, phone model (auto-detected, editable). |
-| 3 | Tape | Chest/bust, waist, hip, inseam: readings 1 and 2; a 3rd is required when they differ by more than 1.0 cm. Diagram and protocol for each. |
-| 4 | Scan | Camera with silhouette guide and tilt check. Front photo, then side. Rejected if any required landmark visibility < 0.6. |
-| 5 | Results | Tape, raw scan and calibrated values, and the size from each. |
-| 6 | Survey | The participant answers the 10-item System Usability Scale. Navigation is hidden while they hold the phone. |
-| 7 | Saved | Record and audit entry written on the server. "Start next participant". |
+| Step | Screen  | What happens                                                                                                                             |
+| ---- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Session | Next ID reserved on the server (P001, P002…). "Paper consent form signed and dated" must be ticked.                                      |
+| 2    | Details | Sex, age band, measured height and weight, size chart, size they usually buy, phone model (auto-detected, editable).                     |
+| 3    | Tape    | Chest/bust, waist, hip, inseam: readings 1 and 2; a 3rd is required when they differ by more than 1.0 cm. Diagram and protocol for each. |
+| 4    | Scan    | Camera with silhouette guide and tilt check. Front photo, then side. Rejected if any required landmark visibility < 0.6.                 |
+| 5    | Results | Tape, raw scan and calibrated values, and the size from each.                                                                            |
+| 6    | Survey  | The participant answers the 10-item System Usability Scale. Navigation is hidden while they hold the phone.                              |
+| 7    | Saved   | Record and audit entry written on the server. "Start next participant".                                                                  |
 
 IDs are never reused. Sessions that were started but not saved appear as **Unused IDs** under Activity.
 
 ## 4. Dashboard
 
-- **Overview:** number of participants; an *error ruler* per measurement (each participant's scan minus tape on a cm scale, with mean bias and 95% limits of agreement); scan-vs-tape scatter; how often each method gives the same size as the tape; SUS mean and spread.
+- **Overview:** number of participants; an _error ruler_ per measurement (each participant's scan minus tape on a cm scale, with mean bias and 95% limits of agreement); scan-vs-tape scatter; how often each method gives the same size as the tape; SUS mean and spread.
 - **Records:** every participant; click a row for the full record (all tape readings, scan details, sizes, SUS answers). Researchers can correct details with a required reason. Download the records CSV (one row per participant) or the landmarks CSV (long format).
 - **Activity:** append-only log of saves, corrections (before → after, reason), exports, calibration changes and password changes. Downloadable.
 - **Calibration:** the active model and its coefficients; upload a new `calibration.json`.
@@ -195,19 +206,20 @@ The server re-checks everything it receives: required consent, the 1.0 cm third-
 
 ### API
 
-| Method | Path | Who |
-|---|---|---|
-| POST | `/api/auth/login`, `/api/auth/logout` | anyone / signed in |
-| GET | `/api/auth/me` | signed in |
-| POST | `/api/auth/change-password` | signed in |
-| POST | `/api/participants/reserve` | researcher |
-| GET | `/api/participants/gaps` | researcher, viewer |
-| GET, POST | `/api/records` | read: both · create: researcher |
-| GET, PATCH | `/api/records/<id>` | read: both · correct (with reason): researcher |
-| GET | `/api/stats`, `/api/audit`, `/api/export?kind=records\|landmarks\|audit` | researcher, viewer |
-| GET, POST | `/api/calibration` | read: both · upload: researcher |
+| Method     | Path                                                                     | Who                                            |
+| ---------- | ------------------------------------------------------------------------ | ---------------------------------------------- |
+| POST       | `/api/auth/login`, `/api/auth/logout`                                    | anyone / signed in                             |
+| GET        | `/api/auth/me`                                                           | signed in                                      |
+| POST       | `/api/auth/change-password`                                              | signed in                                      |
+| POST       | `/api/participants/reserve`                                              | researcher                                     |
+| GET        | `/api/participants/gaps`                                                 | researcher, viewer                             |
+| GET, POST  | `/api/records`                                                           | read: both · create: researcher                |
+| GET, PATCH | `/api/records/<id>`                                                      | read: both · correct (with reason): researcher |
+| GET        | `/api/stats`, `/api/audit`, `/api/export?kind=records\|landmarks\|audit` | researcher, viewer                             |
+| GET, POST  | `/api/calibration`                                                       | read: both · upload: researcher                |
 
 ### Files
+
 ```
 backend/study/models.py       Record, AuditEntry, ReservedId, Counter, CalibrationModel
 backend/study/views.py        API endpoints
