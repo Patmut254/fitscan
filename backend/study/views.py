@@ -14,9 +14,9 @@ from . import logic
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
-from .models import AuditEntry, CalibrationModel, Counter, Record, ReservedId, StudyProfile
+from .models import AuditEntry, CalibrationModel, ConsentForm, ConsentRecord, Counter, Record, ReservedId, StudyProfile
 from .permissions import RESEARCHER_GROUP, VIEWER_GROUP, StudyAccess, TeamAdmin, role_of
-from .serializers import EDITABLE, ValidationError, from_api, to_api, to_summary, validate_edit_value
+from .serializers import EDITABLE, ValidationError, consent_from_api, from_api, to_api, to_summary, validate_edit_value
 
 
 def must_change(u):
@@ -136,12 +136,26 @@ class RecordListView(APIView):
         if not ReservedId.objects.filter(participant_id=pid).exists():
             return bad(f"{pid} was never reserved.")
         try:
+            method, initials, version, signed_at = consent_from_api(request.data)
+        except ValidationError as e:
+            return bad(str(e))
+        form = None
+        if method == "electronic":
+            form = ConsentForm.objects.filter(version=version).first()
+            if not form:
+                return bad(f"Consent form version {version} doesn't exist.")
+        try:
             with transaction.atomic():
                 rec = Record.objects.create(collected_by=request.user, **fields)
+                consent = ConsentRecord.objects.create(
+                    participant_id=pid, method=method, initials=initials, form_version=version,
+                    statements=form.statements if form else None, signed_at=signed_at or rec.created_at,
+                    collected_by=request.user,
+                )
                 AuditEntry.objects.create(action="create", record_id=pid, by=request.user, app_version=fields["app_version"])
         except IntegrityError:
             return bad(f"{pid} has already been saved.", status.HTTP_409_CONFLICT)
-        return Response(to_api(rec), status=status.HTTP_201_CREATED)
+        return Response(to_api(rec, consent, show_initials=True), status=status.HTTP_201_CREATED)
 
 
 class RecordDetailView(APIView):
@@ -152,7 +166,10 @@ class RecordDetailView(APIView):
 
     def get(self, request, pid):
         rec = self.get_object(pid)
-        return Response(to_api(rec)) if rec else bad("Not found", status.HTTP_404_NOT_FOUND)
+        if not rec:
+            return bad("Not found", status.HTTP_404_NOT_FOUND)
+        consent = ConsentRecord.objects.filter(participant_id=pid).first()
+        return Response(to_api(rec, consent, show_initials=role_of(request.user) == "researcher"))
 
     def patch(self, request, pid):
         """Edits after saving require a reason and are written to the audit log with before/after values."""
@@ -187,7 +204,8 @@ class RecordDetailView(APIView):
                 action="edit", record_id=pid, by=request.user, reason=reason, changes=diff,
                 app_version=str(request.data.get("appVersion") or "")[:20],
             )
-        return Response(to_api(rec))
+        consent = ConsentRecord.objects.filter(participant_id=pid).first()
+        return Response(to_api(rec, consent, show_initials=True))
 
 
 class AuditListView(APIView):
@@ -231,7 +249,15 @@ class ExportView(APIView):
     def get(self, request):
         kind = request.query_params.get("kind", "records")
         stamp = timezone.localdate().isoformat()
-        if kind == "audit":
+        if kind == "consent":
+            # Initials are personal data: researchers only, and never in the main records file.
+            if role_of(request.user) != "researcher":
+                return bad("Only researchers can download consent records.", status.HTTP_403_FORBIDDEN)
+            rows = [{"id": c.participant_id, "method": c.method, "initials": c.initials, "signedAt": c.signed_at.isoformat(),
+                     "formVersion": c.form_version or "", "collectedBy": c.collected_by.get_username()}
+                    for c in ConsentRecord.objects.select_related("collected_by")]
+            body = logic.to_csv(rows, ["id", "method", "initials", "signedAt", "formVersion", "collectedBy"])
+        elif kind == "audit":
             rows = [{"at": a.at.isoformat(), "action": a.action, "recordId": a.record_id, "by": a.by.get_username(),
                      "appVersion": a.app_version, "reason": a.reason, "changes": a.changes or ""}
                     for a in AuditEntry.objects.select_related("by").order_by("at", "id")]
@@ -244,7 +270,7 @@ class ExportView(APIView):
                 rows = [logic.flatten(r) for r in recs]
                 body = logic.to_csv(rows, list(rows[0].keys()) if rows else ["id"])
             else:
-                return bad("kind must be records, landmarks or audit")
+                return bad("kind must be records, landmarks, consent or audit")
         AuditEntry.objects.create(action="export", by=request.user, reason=f"{kind} CSV")
         resp = HttpResponse(body, content_type="text/csv; charset=utf-8")
         resp["Content-Disposition"] = f'attachment; filename="fitscan-{kind}-{stamp}.csv"'
@@ -377,3 +403,34 @@ class TeamMemberView(APIView):
         except ValidationError as e:
             return bad(str(e))
         return Response(team_json(u))
+
+
+class ConsentFormView(APIView):
+    """GET: current consent wording (anyone in the study). POST: save new wording as a new version (team admin)."""
+
+    def get_permissions(self):
+        return [TeamAdmin()] if self.request.method == "POST" else [StudyAccess()]
+
+    @staticmethod
+    def as_json(f):
+        return {"version": f.version, "title": f.title, "intro": f.intro, "statements": f.statements,
+                "createdAt": f.created_at.isoformat(), "createdBy": f.created_by.get_username() if f.created_by else None}
+
+    def get(self, request):
+        f = ConsentForm.objects.first()
+        return Response(self.as_json(f) if f else None)
+
+    def post(self, request):
+        title = (request.data.get("title") or "").strip()
+        intro = (request.data.get("intro") or "").strip()
+        statements = [str(x).strip() for x in (request.data.get("statements") or []) if str(x).strip()]
+        if not title or not statements:
+            return bad("The form needs a title and at least one statement.")
+        if len(statements) > 20 or any(len(x) > 600 for x in statements):
+            return bad("Use at most 20 statements of up to 600 characters each.")
+        with transaction.atomic():
+            last = ConsentForm.objects.select_for_update().first()
+            f = ConsentForm.objects.create(version=(last.version + 1) if last else 1, title=title[:200], intro=intro,
+                                           statements=statements, created_by=request.user)
+            AuditEntry.objects.create(action="account", by=request.user, reason=f"Consent form updated to version {f.version}")
+        return Response(self.as_json(f), status=status.HTTP_201_CREATED)

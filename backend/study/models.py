@@ -45,7 +45,8 @@ class Record(models.Model):
     app_version = models.CharField(max_length=20)
     collected_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="records")
 
-    consent_paper_signed = models.BooleanField()
+    consent_paper_signed = models.BooleanField(help_text="Consent obtained (paper or on screen)")
+    consent_method = models.CharField(max_length=12, choices=[("paper", "Paper form"), ("electronic", "Signed on phone")], default="paper")
     sex = models.CharField(max_length=20, choices=SEX_CHOICES)
     age_band = models.CharField(max_length=8, choices=AGE_CHOICES)
     height_cm = models.FloatField()
@@ -116,3 +117,38 @@ class StudyProfile(models.Model):
 
     def __str__(self):
         return f"{self.user} profile"
+
+
+class ConsentForm(models.Model):
+    """Versioned consent wording. Every new save creates a new version; old versions are kept."""
+
+    version = models.PositiveIntegerField(unique=True)
+    title = models.CharField(max_length=200)
+    intro = models.TextField(blank=True)
+    statements = models.JSONField(help_text="List of statements the participant must agree to")
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        ordering = ["-version"]
+
+    def __str__(self):
+        return f"v{self.version}: {self.title}"
+
+
+class ConsentRecord(models.Model):
+    """Who consented and how. Kept apart from measurement records; initials are visible to researchers only."""
+
+    participant_id = models.CharField(max_length=10, unique=True)
+    method = models.CharField(max_length=12, choices=[("paper", "Paper form"), ("electronic", "Signed on phone")])
+    initials = models.CharField(max_length=4, blank=True)
+    form_version = models.PositiveIntegerField(null=True, blank=True)
+    statements = models.JSONField(null=True, blank=True, help_text="Exact wording agreed to")
+    signed_at = models.DateTimeField()
+    collected_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        ordering = ["participant_id"]
+
+    def __str__(self):
+        return f"{self.participant_id} ({self.method})"

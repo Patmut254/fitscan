@@ -1,10 +1,10 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
-import { APP_VERSION, getCalibration, hasToken, logout, me, reserveParticipantId, saveRecord, setUnauthorizedHandler, type Me } from './lib/api';
+import { APP_VERSION, getCalibration, getConsentForm, hasToken, logout, me, reserveParticipantId, saveRecord, setUnauthorizedHandler, type Me } from './lib/api';
 import { parseCalibration, type CalibrationFile } from './lib/calibrate';
 import { phoneModelFromUA } from './lib/phone';
 import { buildRecord } from './lib/record';
 import { emptyDraft, type Draft } from './state/draft';
-import type { FitRecord } from './types';
+import type { ConsentForm, FitRecord } from './types';
 import { TapeProgress } from './components/TapeProgress';
 import { Footer } from './components/Footer';
 import { Logo } from './components/Logo';
@@ -22,10 +22,11 @@ const Scan = lazy(() => import('./screens/Scan').then((m) => ({ default: m.Scan 
 const Overview = lazy(() => import('./screens/data/Overview').then((m) => ({ default: m.Overview })));
 const Records = lazy(() => import('./screens/data/Records').then((m) => ({ default: m.Records })));
 const Activity = lazy(() => import('./screens/data/Activity').then((m) => ({ default: m.Activity })));
+const ConsentEditor = lazy(() => import('./screens/data/ConsentEditor').then((m) => ({ default: m.ConsentEditor })));
 const Team = lazy(() => import('./screens/data/Team').then((m) => ({ default: m.Team })));
 const CalibrationScreen = lazy(() => import('./screens/data/Calibration').then((m) => ({ default: m.Calibration })));
 
-type Tab = 'collect' | 'overview' | 'records' | 'activity' | 'calibration' | 'team' | 'account';
+type Tab = 'collect' | 'overview' | 'records' | 'activity' | 'calibration' | 'consent' | 'team' | 'account';
 // Session steps: 0 Session · 1 Details · 2 Tape · 3 Scan · 4 Results · 5 Survey · 6 Saved
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -49,6 +50,7 @@ const NAV: { tab: Tab; label: string; researcherOnly?: boolean; adminOnly?: bool
   { tab: 'records', label: 'Records' },
   { tab: 'activity', label: 'Activity' },
   { tab: 'calibration', label: 'Calibration' },
+  { tab: 'consent', label: 'Consent form', adminOnly: true },
   { tab: 'team', label: 'Team', adminOnly: true },
   { tab: 'account', label: 'Account' },
 ];
@@ -87,12 +89,20 @@ export default function App() {
   // A participant number is only taken when the researcher presses "Start a new participant",
   // so opening or browsing the app never uses up numbers.
   const [startingNow, setStartingNow] = useState(false);
+  const [consentForm, setConsentForm] = useState<ConsentForm | null>(null);
+  const [consentFormError, setConsentFormError] = useState('');
   const startSession = useCallback(async () => {
     if (starting.current) return;
     starting.current = true;
     setStartingNow(true);
     setStartError('');
     try {
+      // Always fetch the latest consent wording for each new participant.
+      setConsentFormError('');
+      getConsentForm().then(
+        (f) => (f ? setConsentForm(f) : setConsentFormError('No consent form has been set up. Use the paper form, or ask the admin to add one.')),
+        (e) => setConsentFormError(`Couldn't load the consent form: ${e.message}`),
+      );
       const [{ id }, phone] = await Promise.all([reserveParticipantId(), detectPhoneModel()]);
       setDraft(emptyDraft(id, phone));
       setRecord(null);
@@ -240,6 +250,8 @@ export default function App() {
             <Activity />
           ) : tab === 'calibration' ? (
             <CalibrationScreen calibration={cal} canEdit={isResearcher} onChanged={refreshCalibration} />
+          ) : tab === 'consent' && user.isSuperuser ? (
+            <ConsentEditor />
           ) : tab === 'team' && user.isSuperuser ? (
             <Team me={user} />
           ) : tab === 'account' ? (
@@ -256,7 +268,7 @@ export default function App() {
           ) : (
             <>
               <TapeProgress step={step} id={draft.id} />
-              {step === 0 && <NewSession draft={draft} setDraft={setDraft} onNext={() => setStep(1)} />}
+              {step === 0 && <NewSession draft={draft} setDraft={setDraft} form={consentForm} formError={consentFormError} onNext={() => setStep(1)} />}
               {step === 1 && <Participant draft={draft} setDraft={setDraft} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
               {step === 2 && <Tape draft={draft} setDraft={setDraft} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
               {step === 3 && (

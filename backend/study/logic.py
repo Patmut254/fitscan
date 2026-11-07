@@ -90,7 +90,7 @@ def flatten(rec):
     """One flat row per participant. `rec` is the API (camelCase) representation."""
     o = {
         "id": rec["id"], "createdAt": rec["createdAt"], "savedAt": rec["savedAt"], "lastEditedAt": rec.get("lastEditedAt") or "",
-        "appVersion": rec["appVersion"], "collectedBy": rec.get("collectedBy", ""), "consentPaperSigned": rec["consentPaperSigned"],
+        "appVersion": rec["appVersion"], "collectedBy": rec.get("collectedBy", ""), "consentPaperSigned": rec["consentPaperSigned"], "consentMethod": rec.get("consentMethod", ""),
         "sex": rec["sex"], "ageBand": rec["ageBand"], "heightCm": rec["heightCm"], "weightKg": rec["weightKg"],
         "selfSize": rec["selfSize"], "chart": rec["chart"], "phoneModel": rec["phoneModel"],
     }

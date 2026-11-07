@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from . import logic
-from .models import AuditEntry, CalibrationModel, Counter, Record, ReservedId
+from .models import AuditEntry, CalibrationModel, ConsentForm, ConsentRecord, Counter, Record, ReservedId
 from .serializers import to_api
 
 
@@ -112,3 +112,15 @@ class CalibrationAdmin(ReadOnlyAdmin):
 @admin.register(Counter)
 class CounterAdmin(ReadOnlyAdmin):
     list_display = ("name", "next_value")
+
+
+@admin.register(ConsentRecord)
+class ConsentRecordAdmin(ReadOnlyAdmin):
+    list_display = ("participant_id", "method", "initials", "signed_at", "form_version", "collected_by")
+    list_filter = ("method", "form_version")
+    search_fields = ("participant_id",)
+
+
+@admin.register(ConsentForm)
+class ConsentFormAdmin(ReadOnlyAdmin):
+    list_display = ("version", "title", "created_at", "created_by")

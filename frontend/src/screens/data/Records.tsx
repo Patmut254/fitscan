@@ -113,6 +113,25 @@ function Detail({ id, canEdit, onClose, onChanged }: { id: string; canEdit: bool
                 </div>
               ))}
             </dl>
+            <section className="sheet text-sm">
+              <h3 className="font-bold">Consent</h3>
+              {rec.consent?.method === 'electronic' ? (
+                <p className="mt-1">
+                  Signed on the phone{rec.consent.initials ? <> with initials <strong className="num">{rec.consent.initials}</strong></> : ''}
+                  {rec.consent.signedAt && ` on ${new Date(rec.consent.signedAt).toLocaleString()}`}
+                  {rec.consent.formVersion != null && `, consent form version ${rec.consent.formVersion}`}.
+                </p>
+              ) : (
+                <p className="mt-1">Paper consent form, kept by the researcher.</p>
+              )}
+              {rec.consent?.statements && (
+                <details className="mt-2 text-ink-soft">
+                  <summary className="cursor-pointer">Wording they agreed to</summary>
+                  <ol className="mt-2 list-decimal space-y-1 pl-5">{rec.consent.statements.map((st, i) => <li key={i}>{st}</li>)}</ol>
+                </details>
+              )}
+            </section>
+
             {rec.lastEditedAt && <p className="note-warn">Edited after saving on {new Date(rec.lastEditedAt).toLocaleString()}. See Activity for details.</p>}
 
             <section className="panel overflow-hidden">
@@ -180,7 +199,7 @@ export function Records({ canEdit }: { canEdit: boolean }) {
 
   const shown = useMemo(() => (records ?? []).filter((r) => !q || r.id.toLowerCase().includes(q.toLowerCase()) || r.phoneModel.toLowerCase().includes(q.toLowerCase())), [records, q]);
 
-  async function exp(kind: 'records' | 'landmarks') {
+  async function exp(kind: 'records' | 'landmarks' | 'consent') {
     setExporting(kind);
     try {
       await downloadExport(kind);
@@ -201,6 +220,7 @@ export function Records({ canEdit }: { canEdit: boolean }) {
         <div className="flex flex-wrap gap-2">
           <button className="btn-primary btn-sm" disabled={!records?.length || !!exporting} onClick={() => exp('records')}>{exporting === 'records' ? 'Preparing…' : 'Download CSV'}</button>
           <button className="btn-ghost btn-sm" disabled={!records?.length || !!exporting} onClick={() => exp('landmarks')}>{exporting === 'landmarks' ? 'Preparing…' : 'Landmarks CSV'}</button>
+          {canEdit && <button className="btn-ghost btn-sm" disabled={!records?.length || !!exporting} onClick={() => exp('consent')} title="Initials and consent dates, kept separate from the measurements">{exporting === 'consent' ? 'Preparing…' : 'Consent CSV'}</button>}
         </div>
       </div>
       <input className="input max-w-xs" placeholder="Find an ID, e.g. P012" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search records" />

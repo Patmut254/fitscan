@@ -58,6 +58,11 @@ export function buildRecord(d: Draft, appVersion: string, cal: CalibrationFile |
       scanCal: calibrated ? summary(recommendSize(calibrated, chart)) : null,
     },
     sus: items ? { items, score: susScore(items) } : null,
+    consentMethod: d.consentMethod,
+    consent:
+      d.consentMethod === 'electronic'
+        ? { method: 'electronic', initials: d.consentInitials, formVersion: d.consentFormVersion, signedAt: d.consentSignedAt ?? d.createdAt, agreedAll: true }
+        : { method: 'paper' },
   };
   return { record, calibrationNote };
 }

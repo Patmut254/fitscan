@@ -1,4 +1,4 @@
-import type { AgeBand, ChartKey, MeasureKey, ScanResult, Sex } from '../types';
+import type { AgeBand, ChartKey, ConsentMethod, MeasureKey, ScanResult, Sex } from '../types';
 
 export type Readings = [number | null, number | null, number | null];
 
@@ -6,6 +6,11 @@ export interface Draft {
   id: string;
   createdAt: string;
   consent: boolean;
+  consentMethod: ConsentMethod;
+  consentAgreed: boolean[];
+  consentInitials: string;
+  consentSignedAt: string | null;
+  consentFormVersion: number | null;
   sex: Sex | '';
   ageBand: AgeBand | '';
   heightCm: number | null;
@@ -24,6 +29,11 @@ export function emptyDraft(id: string, phoneModel: string): Draft {
     id,
     createdAt: new Date().toISOString(),
     consent: false,
+    consentMethod: 'electronic',
+    consentAgreed: [],
+    consentInitials: '',
+    consentSignedAt: null,
+    consentFormVersion: null,
     sex: '',
     ageBand: '',
     heightCm: null,

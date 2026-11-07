@@ -79,6 +79,27 @@ export interface FitRecord {
     scanCal: SizeMatchSummary | null;
   };
   sus: { items: number[]; score: number } | null;
+  consentMethod?: ConsentMethod;
+  consent?: ConsentInfo | null;
+}
+
+export type ConsentMethod = 'electronic' | 'paper';
+export interface ConsentInfo {
+  method: ConsentMethod;
+  initials?: string; // only sent to/returned for researchers
+  formVersion?: number | null;
+  signedAt?: string;
+  statements?: string[] | null;
+  agreedAll?: boolean;
+}
+
+export interface ConsentForm {
+  version: number;
+  title: string;
+  intro: string;
+  statements: string[];
+  createdAt?: string;
+  createdBy?: string | null;
 }
 
 export interface AuditEntry {

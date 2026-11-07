@@ -1,5 +1,5 @@
 /** Django REST API client. The auth token is kept in localStorage so a page reload keeps you signed in. */
-import type { AuditEntry, FitRecord } from '../types';
+import type { AuditEntry, ConsentForm, FitRecord } from '../types';
 import type { CalibrationFile } from './calibrate';
 
 export const APP_VERSION = __APP_VERSION__;
@@ -25,6 +25,8 @@ export interface TeamMember {
   lastLogin: string | null;
   dateJoined: string;
 }
+export const getConsentForm = () => req<ConsentForm | null>('consent-form');
+export const saveConsentForm = (f: { title: string; intro: string; statements: string[] }) => post<ConsentForm>('consent-form', f);
 export const listTeam = () => req<TeamMember[]>('team');
 export const addTeamMember = (m: { username: string; name: string; password: string; role: 'researcher' | 'viewer'; isAdmin: boolean }) => post<TeamMember>('team', m);
 export const updateTeamMember = (username: string, changes: Partial<{ role: 'researcher' | 'viewer'; isAdmin: boolean; isActive: boolean; password: string; name: string }>) =>
@@ -134,7 +136,7 @@ export const getCalibration = () => req<{ calibration: CalibrationFile | null; u
 export const uploadCalibration = (c: unknown) => post<{ calibration: CalibrationFile }>('calibration', c);
 
 /** Downloads a CSV through the authenticated API. */
-export async function downloadExport(kind: 'records' | 'landmarks' | 'audit') {
+export async function downloadExport(kind: 'records' | 'landmarks' | 'audit' | 'consent') {
   const res = await fetch(`${BASE}/api/export?kind=${kind}`, { headers: token ? { Authorization: `Token ${token}` } : {} });
   if (!res.ok) throw new ApiError(res.status, `Export failed (${res.status})`);
   const blob = await res.blob();

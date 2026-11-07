@@ -47,4 +47,14 @@ describe('buildRecord', () => {
     const keys = Object.keys(buildRecord(draft(), '0.1.0', null).record);
     for (const bad of ['name', 'email', 'phone', 'photo', 'image']) expect(keys).not.toContain(bad);
   });
+  it('records electronic consent with initials and form version', () => {
+    const d = draft();
+    Object.assign(d, { consentMethod: 'electronic', consentInitials: 'MW', consentFormVersion: 2, consentSignedAt: '2026-11-08T10:00:00.000Z' });
+    expect(buildRecord(d, '0.2.0', null).record.consent).toEqual({ method: 'electronic', initials: 'MW', formVersion: 2, signedAt: '2026-11-08T10:00:00.000Z', agreedAll: true });
+  });
+  it('records paper consent without initials', () => {
+    const d = draft();
+    d.consentMethod = 'paper';
+    expect(buildRecord(d, '0.2.0', null).record.consent).toEqual({ method: 'paper' });
+  });
 });

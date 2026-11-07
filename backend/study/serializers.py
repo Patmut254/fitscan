@@ -1,4 +1,6 @@
 """Converts between the app's JSON shape (camelCase, same as frontend/src/types.ts) and the model."""
+import re
+
 from django.utils.dateparse import parse_datetime
 
 from .logic import check_tape, sus_score
@@ -6,7 +8,7 @@ from .models import AGE_BANDS, CHART_CHOICES, SEX_CHOICES, Record
 
 ALLOWED_KEYS = {
     "id", "createdAt", "savedAt", "appVersion", "consentPaperSigned", "sex", "ageBand", "heightCm", "weightKg",
-    "selfSize", "chart", "phoneModel", "tape", "tapeMean", "scan", "calibrated", "sizes", "sus",
+    "selfSize", "chart", "phoneModel", "tape", "tapeMean", "scan", "calibrated", "sizes", "sus", "consent",
 }
 SEXES = {s for s, _ in SEX_CHOICES}
 CHARTS = {c for c, _ in CHART_CHOICES}
@@ -26,7 +28,20 @@ class ValidationError(Exception):
     pass
 
 
-def to_api(r: Record) -> dict:
+def to_api(r: Record, consent=None, show_initials=False) -> dict:
+    """consent: the participant's ConsentRecord (optional). Initials only when show_initials (researchers)."""
+    c = None
+    if consent is not None:
+        c = {
+            "method": consent.method,
+            "formVersion": consent.form_version,
+            "signedAt": consent.signed_at.isoformat(),
+            "statements": consent.statements,
+        }
+        if show_initials:
+            c["initials"] = consent.initials
+    elif r.consent_method:
+        c = {"method": r.consent_method}
     return {
         "id": r.participant_id,
         "createdAt": r.created_at.isoformat(),
@@ -48,6 +63,8 @@ def to_api(r: Record) -> dict:
         "calibrated": r.calibrated,
         "sizes": r.sizes,
         "sus": {"items": r.sus_items, "score": r.sus_score} if r.sus_items else None,
+        "consentMethod": r.consent_method,
+        "consent": c,
     }
 
 
@@ -93,6 +110,32 @@ def validate_edit_value(api_key, value):
     return value
 
 
+def normalise_initials(v) -> str:
+    return re.sub(r"[^A-Za-z]", "", str(v or "")).upper()
+
+
+def consent_from_api(d: dict):
+    """Validates the consent block. Returns (method, initials, form_version, signed_at)."""
+    c = d.get("consent") or {"method": "paper"}
+    if not isinstance(c, dict):
+        raise ValidationError("consent must be an object")
+    method = c.get("method")
+    if method == "paper":
+        return "paper", "", None, parse_datetime(d.get("createdAt") or "")
+    if method != "electronic":
+        raise ValidationError("consent.method must be paper or electronic")
+    initials = normalise_initials(c.get("initials"))
+    if not 1 <= len(initials) <= 4:
+        raise ValidationError("Initials must be 1 to 4 letters")
+    if c.get("agreedAll") is not True:
+        raise ValidationError("Every consent statement must be agreed to")
+    version = c.get("formVersion")
+    signed = parse_datetime(c.get("signedAt") or "")
+    if not isinstance(version, int) or not signed:
+        raise ValidationError("consent needs formVersion and signedAt")
+    return "electronic", initials, version, signed
+
+
 def from_api(d: dict) -> dict:
     """Validates a new record payload and returns model field kwargs (without collected_by)."""
     if not isinstance(d, dict):
@@ -101,7 +144,7 @@ def from_api(d: dict) -> dict:
     if extra:
         raise ValidationError(f"Fields not allowed: {', '.join(sorted(extra))}")
     if d.get("consentPaperSigned") is not True:
-        raise ValidationError("Paper consent must be confirmed")
+        raise ValidationError("Consent must be confirmed")
     if d.get("sex") not in SEXES:
         raise ValidationError("Invalid sex")
     if d.get("ageBand") not in AGE_BANDS:
@@ -135,6 +178,7 @@ def from_api(d: dict) -> dict:
         "created_at": created,
         "app_version": str(d.get("appVersion") or "")[:20],
         "consent_paper_signed": True,
+        "consent_method": consent_from_api(d)[0],
         "sex": d["sex"],
         "age_band": d["ageBand"],
         "height_cm": _num(d, "heightCm", 120, 230),
