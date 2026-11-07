@@ -41,7 +41,7 @@ export function Account({ user, onSignOut }: { user: Me; onSignOut: () => void }
         <p className="mt-1 text-sm text-ink-soft">Signed in as {user.username}</p>
         <p className="mt-3 text-sm">{ROLE_TEXT[user.role]}</p>
         {user.isSuperuser && (
-          <a className="btn-ghost btn-sm mt-4" href="/admin/" target="_blank" rel="noreferrer">
+          <a className="btn-ghost btn-sm mt-4" href={(import.meta.env.VITE_ADMIN_URL as string | undefined) ?? '/admin/'} target="_blank" rel="noreferrer">
             Open admin site (accounts and raw data)
           </a>
         )}

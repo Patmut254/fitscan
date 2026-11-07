@@ -1,0 +1,18 @@
+# Render Blueprint for the Django backend (free web service).
+# Render dashboard → New → Blueprint → pick this repository.
+services:
+  - type: web
+    name: fitscan-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput
+    startCommand: gunicorn config.wsgi --bind 0.0.0.0:$PORT --workers 2
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false   # paste your Neon connection string when Render asks

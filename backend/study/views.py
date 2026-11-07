@@ -24,6 +24,16 @@ def bad(msg, code=status.HTTP_400_BAD_REQUEST):
     return Response({"detail": msg}, status=code)
 
 
+class HealthView(APIView):
+    """Unauthenticated ping used by Render's health check and to wake the server early."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        return Response({"ok": True})
+
+
 # ─── Auth ───────────────────────────────────────────────────────────────────────────────
 
 class LoginView(APIView):

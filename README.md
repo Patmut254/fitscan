@@ -66,23 +66,73 @@ cd frontend && npm test                        # 56 unit tests (measurement, siz
 
 ---
 
-## 2. Put it online (needed for the phone camera)
+## 2. Put it online: Vercel + Render + Neon (all free)
 
-Phone browsers only allow the camera over **HTTPS**, so deploy before testing on the phone.
-In production Django serves the built React app itself, so it is **one web service**.
+Phone browsers only allow the camera over **HTTPS**. The setup:
 
-Any Python host works (Render, Railway, PythonAnywhere, a VPS). The general recipe:
+| Part | Host | Why |
+|---|---|---|
+| React app | **Vercel** | Fast, HTTPS, deploys on every `git push`. Forwards `/api/*` to Render (`frontend/vercel.json`), so the browser sees one site. |
+| Django API + admin | **Render** (free web service) | Runs Django with gunicorn, deploys on every push (`render.yaml`). |
+| Database | **Neon** Postgres (free) | Render's free database is deleted after 30 days; Neon's free plan keeps data. |
 
-1. Copy `backend/.env.example` to `backend/.env` (or set the same variables in the host's dashboard):
-   `DJANGO_DEBUG=false`, a long random `DJANGO_SECRET_KEY`, your domain in `DJANGO_ALLOWED_HOSTS` and
-   `DJANGO_CSRF_TRUSTED_ORIGINS`.
-2. **Build command:** `bash backend/build.sh` (builds the React app, collects static files, migrates).
-3. **Start command:** `cd backend && gunicorn config.wsgi --bind 0.0.0.0:$PORT`
-4. **Database:** many free hosts wipe local files on redeploy, so use PostgreSQL there and set
-   `DATABASE_URL=postgres://…`. SQLite is fine on a VPS or PythonAnywhere.
-5. Open a shell on the host and run `python manage.py create_user …` once.
+Push this folder to a **private GitHub repository** first.
 
-Check that your ethics approval allows where the server and database are hosted.
+**1. Neon (database)**
+neon.com → sign up → **New project** (pick the region closest to where your data may be stored) →
+copy the **connection string** (`postgresql://…?sslmode=require`).
+
+**2. Render (Django)**
+render.com → **New → Blueprint** → pick the repository. Render reads `render.yaml` and asks for
+`DATABASE_URL`: paste the Neon string. Click **Apply**. The build installs packages, collects static
+files and creates the tables. When it's live, note the address, e.g. `https://fitscan-api.onrender.com`.
+Check `https://fitscan-api.onrender.com/api/health` shows `{"ok": true}`.
+
+**3. Create your account** (PowerShell, in `backend`, using the same Neon string):
+```powershell
+pip install -r requirements.txt
+$env:DATABASE_URL = "postgresql://...paste the Neon string..."
+python manage.py create_user anita --role researcher --superuser
+Remove-Item Env:DATABASE_URL
+```
+
+**4. Vercel (React app)**
+- In `frontend/vercel.json`, replace `YOUR-BACKEND.onrender.com` with your Render address. Commit and push.
+- vercel.com → **Add New → Project** → pick the repository → set **Root Directory** to `frontend` → **Deploy**.
+- Optional: in **Settings → Environment Variables** add `VITE_ADMIN_URL` = `https://fitscan-api.onrender.com/admin/`
+  so the "Open admin site" button goes to Render, then redeploy.
+
+Open `https://YOUR-PROJECT.vercel.app` on the phone and sign in.
+
+**Good to know**
+- Render's free server sleeps after 15 minutes without visits and takes about a minute to wake. The app pings
+  it as soon as it opens, so **open FitScan a minute before each session**.
+- Neon's free database pauses after 5 idle minutes and wakes in a second or two. Idle data is never deleted.
+- The Django admin site is on the Render address (`https://fitscan-api.onrender.com/admin/`).
+- After changing `backend/study/models.py`, run `python manage.py makemigrations` locally and push; Render runs `migrate` on each deploy.
+- Download the records CSV regularly as a backup, and check that your ethics approval allows where the data is stored.
+
+### Alternative: PythonAnywhere (one server, SQLite file)
+
+**On your computer (PowerShell, in the project folder):**
+```powershell
+cd frontend; npm install; npm run build; cd ..
+Compress-Archive -Path backend, frontend\dist -DestinationPath fitscan-deploy.zip -Force
+```
+
+**On PythonAnywhere:** upload the zip in **Files**, then in a **Bash console**:
+```bash
+mkdir -p ~/fitscan && cd ~/fitscan && unzip -o ~/fitscan-deploy.zip
+mkvirtualenv fitscan --python=python3.12
+cd ~/fitscan/backend && pip install -r requirements.txt
+nano .env   # DJANGO_DEBUG=false, DJANGO_SECRET_KEY=..., DJANGO_ALLOWED_HOSTS=USERNAME.pythonanywhere.com,
+            # DJANGO_CSRF_TRUSTED_ORIGINS=https://USERNAME.pythonanywhere.com, FRONTEND_DIST=/home/USERNAME/fitscan/dist
+python manage.py migrate && python manage.py collectstatic --noinput
+python manage.py create_user anita --role researcher --superuser
+```
+**Web** tab → Add a new web app → Manual configuration → Python 3.12; set Virtualenv to
+`/home/USERNAME/.virtualenvs/fitscan`, turn on Force HTTPS, paste `deploy/pythonanywhere_wsgi.py` into the WSGI file, Reload.
+Free apps must be renewed monthly ("Run until 1 month from today").
 
 ### Optional: self-host the pose model
 By default the model downloads from Google's storage on the first scan. For weak connections:

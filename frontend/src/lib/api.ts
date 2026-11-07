@@ -31,6 +31,11 @@ function setToken(t: string | null) {
 }
 export const hasToken = () => Boolean(token);
 
+/** Free hosting sleeps when idle; ping as soon as the app opens so it is awake by sign-in. */
+export function wakeServer() {
+  fetch(`${BASE}/api/health`).catch(() => undefined);
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);

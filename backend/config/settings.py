@@ -5,16 +5,6 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIST = Path(os.environ.get("FRONTEND_DIST", BASE_DIR.parent / "frontend" / "dist"))
-
-
-def env_bool(name, default=False):
-    return os.environ.get(name, str(default)).lower() in ("1", "true", "yes", "on")
-
-
-def env_list(name, default=""):
-    return [x.strip() for x in os.environ.get(name, default).split(",") if x.strip()]
-
 
 # Load backend/.env if present (simple KEY=VALUE lines, no extra dependency).
 _env_file = BASE_DIR / ".env"
@@ -25,13 +15,35 @@ if _env_file.exists():
             k, v = line.split("=", 1)
             os.environ.setdefault(k.strip(), v.strip())
 
-DEBUG = env_bool("DJANGO_DEBUG", True)
+FRONTEND_DIST = Path(os.environ.get("FRONTEND_DIST", BASE_DIR.parent / "frontend" / "dist"))
+
+
+
+def env_bool(name, default=False):
+    return os.environ.get(name, str(default)).lower() in ("1", "true", "yes", "on")
+
+
+def env_list(name, default=""):
+    return [x.strip() for x in os.environ.get(name, default).split(",") if x.strip()]
+
+
+ON_VERCEL = bool(os.environ.get("VERCEL"))
+ON_RENDER = bool(os.environ.get("RENDER"))
+HOSTED = ON_VERCEL or ON_RENDER
+DEBUG = env_bool("DJANGO_DEBUG", not HOSTED)
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-insecure-key-change-me")
 if not DEBUG and SECRET_KEY.startswith("dev-only"):
     raise RuntimeError("Set DJANGO_SECRET_KEY in production")
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0" + (",*" if DEBUG else ""))
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS", "")
+if ON_VERCEL:
+    # Every *.vercel.app address of this project (production and previews).
+    ALLOWED_HOSTS += [".vercel.app"]
+    CSRF_TRUSTED_ORIGINS += ["https://*.vercel.app"]
+if ON_RENDER and os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS += [os.environ["RENDER_EXTERNAL_HOSTNAME"]]
+    CSRF_TRUSTED_ORIGINS += [f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -78,9 +90,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # SQLite by default. For PostgreSQL set DATABASE_URL=postgres://user:pass@host:5432/dbname
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
-_db_url = os.environ.get("DATABASE_URL")
+_db_url = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
 if _db_url and _db_url.startswith(("postgres://", "postgresql://")):
-    from urllib.parse import urlparse
+    from urllib.parse import parse_qs, urlparse
 
     u = urlparse(_db_url)
     DATABASES["default"] = {
@@ -90,7 +102,11 @@ if _db_url and _db_url.startswith(("postgres://", "postgresql://")):
         "PASSWORD": u.password,
         "HOST": u.hostname,
         "PORT": u.port or 5432,
+        # Neon (and most hosted Postgres) requires SSL.
+        "OPTIONS": {"sslmode": parse_qs(u.query).get("sslmode", ["require"])[0]},
     }
+elif HOSTED:
+    raise RuntimeError("No database: set DATABASE_URL to your Neon Postgres connection string.")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
