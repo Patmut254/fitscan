@@ -19,7 +19,7 @@ export function Calibration({ calibration, canEdit, onChanged }: { calibration: 
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-3xl font-extrabold" style={{ fontStretch: '118%' }}>Calibration</h1>
+        <h1 className="text-3xl font-bold">Calibration</h1>
         <p className="mt-1 text-ink-soft">
           A calibration model corrects the raw scan using tape data you have already collected: tape = b0 + b1·scan + b2·sex + b3·height, one model per measurement.
         </p>

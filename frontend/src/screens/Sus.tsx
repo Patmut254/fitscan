@@ -27,7 +27,7 @@ export function Sus({ values, onChange, onSubmit, saving, error }: { values: (nu
                     aria-pressed={values[i] === n}
                     aria-label={`${n}${ANCHORS[n - 1] ? `, ${ANCHORS[n - 1]}` : ''}`}
                     onClick={() => onChange(values.map((v, j) => (j === i ? n : v)))}
-                    className={`num h-12 rounded-lg border text-lg font-bold transition-colors ${values[i] === n ? 'border-ink bg-tape text-ink' : 'border-grid bg-paper text-ink-soft hover:border-ink-faint'}`}
+                    className={`num h-12 rounded-lg border text-lg font-bold transition-colors ${values[i] === n ? 'border-tape bg-tape text-ink' : 'border-grid bg-paper text-ink-soft hover:border-ink-faint'}`}
                   >
                     {n}
                   </button>

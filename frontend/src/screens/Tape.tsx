@@ -26,10 +26,10 @@ function TapeCard({ k, readings, onChange }: { k: MeasureKey; readings: Readings
   const mean = err ? null : meanOfClosestTwo(readingsToStore(readings));
 
   return (
-    <section className={`sheet ${err ? '' : 'border-sage'}`}>
+    <section className="sheet">
       <div className="flex items-baseline justify-between">
         <h3 className="text-lg font-bold">{TAPE_PROTOCOL[k].title}</h3>
-        {mean != null && <span className="num text-2xl font-extrabold">{mean.toFixed(1)}<span className="ml-1 text-sm font-medium text-ink-faint">cm</span></span>}
+        {mean != null && <span className="num text-2xl font-bold">{mean.toFixed(1)}<span className="ml-1 text-sm font-medium text-ink-faint">cm</span></span>}
       </div>
       <div className="mt-2 flex gap-3">
         <TapeDiagram which={k} />
@@ -41,7 +41,7 @@ function TapeCard({ k, readings, onChange }: { k: MeasureKey; readings: Readings
             <label className="label" htmlFor={`${k}-${i}`}>Reading {i + 1} (cm)</label>
             <input
               id={`${k}-${i}`}
-              className={`input num ${i === 2 ? 'border-tape-deep bg-tape-light' : ''}`}
+              className={`input num ${i === 2 ? 'bg-tape-light' : ''}`}
               type="number"
               inputMode="decimal"
               step="0.1"

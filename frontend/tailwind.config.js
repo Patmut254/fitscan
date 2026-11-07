@@ -11,7 +11,7 @@ export default {
         chalk: { DEFAULT: '#B8432F', light: '#F6E1DC' },
         sage: { DEFAULT: '#2F6F4E', light: '#DCEDE3' },
       },
-      fontFamily: { sans: ['Archivo Variable', 'Archivo', 'system-ui', 'sans-serif'] },
+      fontFamily: { sans: ['Google Sans Variable', 'Google Sans', 'Roboto', 'system-ui', 'sans-serif'] },
       borderRadius: { xl: '14px' },
     },
   },

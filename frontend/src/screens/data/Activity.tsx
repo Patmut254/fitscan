@@ -23,7 +23,7 @@ export function Activity() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-extrabold" style={{ fontStretch: '118%' }}>Activity</h1>
+          <h1 className="text-3xl font-bold">Activity</h1>
           <p className="text-ink-soft">Every save, correction, export and calibration change. Entries can't be edited or deleted.</p>
         </div>
         <button className="btn-ghost btn-sm" disabled={!audit?.length} onClick={() => downloadExport('audit').catch((e) => setError(e.message))}>Download log CSV</button>

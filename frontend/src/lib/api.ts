@@ -55,13 +55,18 @@ async function req<T>(path: string, opts: RequestInit = {}): Promise<T> {
     onUnauthorized();
   }
   if (!res.ok) {
-    let msg = `Request failed (${res.status})`;
+    let msg = `Something went wrong on the server (error ${res.status}). Try again; if it keeps happening, check the server window for details.`;
+    let json = false;
     try {
       const j = await res.json();
+      json = true;
       if (j?.detail) msg = j.detail;
     } catch {
       /* not JSON */
     }
+    // During development, Vite answers 500/502/504 itself when Django isn't running.
+    if (!json && [500, 502, 503, 504].includes(res.status) && import.meta.env.DEV)
+      msg = "Can't reach the Django server. In the backend folder run: python manage.py runserver";
     throw new ApiError(res.status, msg);
   }
   if (res.status === 204) return undefined as T;

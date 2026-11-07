@@ -6,7 +6,7 @@ export function Logo({ className = '' }: { className?: string }) {
         <rect x="4" y="12" width="24" height="8" fill="#F2C230" />
         <path d="M8 12v4M12 12v3M16 12v4M20 12v3M24 12v4" stroke="#1B2A41" strokeWidth="1.5" />
       </svg>
-      <span className="text-lg font-extrabold" style={{ fontStretch: '118%' }}>FitScan</span>
+      <span className="text-lg font-bold">FitScan</span>
     </span>
   );
 }

@@ -23,14 +23,12 @@ export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
   return (
     <div className="mx-auto flex min-h-[100svh] max-w-sm flex-col justify-center px-4 py-10">
       <Logo className="mb-10" />
-      <h1 className="text-3xl font-extrabold leading-tight" style={{ fontStretch: '120%' }}>
+      <h1 className="text-[2rem] font-medium leading-tight">
         Scan, tape, compare.
       </h1>
       <p className="mt-2 text-ink-soft">Sign in with the study account the admin created for you.</p>
 
-      {/* A strip of tape as the form's top edge: the one decorative element on this page */}
-      <div className="mt-8 h-2 rounded-t-md bg-tape" aria-hidden />
-      <form onSubmit={submit} className="space-y-4 rounded-b-xl border border-t-0 border-grid bg-paper-raised p-5">
+      <form onSubmit={submit} className="mt-8 space-y-4 rounded-xl border border-grid bg-paper-raised p-5">
         <div>
           <label className="label" htmlFor="u">Username</label>
           <input id="u" className="input" autoComplete="username" autoCapitalize="none" value={username} onChange={(e) => setUsername(e.target.value)} required />

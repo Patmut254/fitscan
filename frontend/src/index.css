@@ -12,7 +12,7 @@
       linear-gradient(to bottom, rgba(27, 42, 65, 0.045) 1px, transparent 1px);
     background-size: 28px 28px;
   }
-  h1, h2, h3 { font-stretch: 112%; letter-spacing: -0.01em; }
+  h1, h2, h3 { letter-spacing: 0; }
   :focus-visible { outline: 3px solid #F2C230; outline-offset: 2px; }
   /* Flat design: no shadows anywhere, including browser defaults on phone inputs and buttons. */
   *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
@@ -38,7 +38,7 @@
   .seg { @apply min-h-[48px] rounded-lg border px-2 text-sm font-medium transition-colors; }
   .seg-on { @apply border-ink bg-ink text-white; }
   .seg-off { @apply border-grid bg-paper-raised text-ink hover:border-ink-faint; }
-  .note-warn { @apply rounded-lg border-l-4 border-tape-deep bg-tape-light px-3 py-2 text-sm text-ink; }
-  .note-err { @apply rounded-lg border-l-4 border-chalk bg-chalk-light px-3 py-2 text-sm text-chalk; }
-  .note-ok { @apply rounded-lg border-l-4 border-sage bg-sage-light px-3 py-2 text-sm text-sage; }
+  .note-warn { @apply rounded-lg bg-tape-light px-3 py-2 text-sm text-ink; }
+  .note-err { @apply rounded-lg bg-chalk-light px-3 py-2 text-sm text-chalk; }
+  .note-ok { @apply rounded-lg bg-sage-light px-3 py-2 text-sm text-sage; }
 }

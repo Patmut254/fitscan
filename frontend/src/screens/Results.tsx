@@ -22,7 +22,7 @@ export function Results({ record, calibrationNote, onNext, onRescan }: { record:
         <div className="mt-3 grid grid-cols-4 divide-x divide-grid text-center">
           {sizes.map((c) => (
             <div key={c.label} className="px-1">
-              <div className="num text-3xl font-extrabold" style={{ fontStretch: '115%' }}>{c.size ?? '–'}</div>
+              <div className="num text-3xl font-bold">{c.size ?? '–'}</div>
               <div className="mt-1 text-xs text-ink-soft">{c.label}</div>
               {c.margin != null && c.margin < 1 && <div className="mt-0.5 text-[11px] text-tape-deep">near boundary</div>}
             </div>

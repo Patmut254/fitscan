@@ -157,7 +157,7 @@ export default function App() {
       {!participantMode && (
         <>
           {/* Desktop side rail */}
-          <nav className="sticky top-0 hidden h-[100svh] w-56 shrink-0 flex-col border-r border-grid bg-paper-raised px-4 py-6 lg:flex" aria-label="Main">
+          <nav className="sticky top-0 hidden h-[100svh] w-56 shrink-0 flex-col bg-paper-raised px-4 py-6 lg:flex" aria-label="Main">
             <Logo className="mb-8 px-2" />
             <ul className="space-y-1">
               {nav.map((n) => (
@@ -179,7 +179,7 @@ export default function App() {
             </div>
           </nav>
           {/* Phone top bar */}
-          <header className="sticky top-0 z-30 border-b border-grid bg-paper-raised/95 backdrop-blur lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <header className="sticky top-0 z-30 bg-paper-raised lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
             <div className="flex items-center justify-between px-4 py-2.5">
               <Logo />
               <span className="text-sm text-ink-faint">{user.username}</span>

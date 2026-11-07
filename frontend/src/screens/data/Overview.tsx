@@ -115,7 +115,7 @@ export function Overview() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-extrabold" style={{ fontStretch: '118%' }}>{stats.n} participants measured</h1>
+        <h1 className="text-3xl font-bold">{stats.n} participants measured</h1>
         <p className="mt-1 text-ink-soft">
           {fem} female, {male} male{pnts ? `, ${pnts} prefer not to say` : ''}. Scans took {fmt((stats.processingMsMean ?? 0) / 1000, 2)} s on average, with {fmt(stats.retakesMean, 1)} retakes.
         </p>
@@ -153,7 +153,7 @@ export function Overview() {
           </section>
           <section className="sheet">
             <h2 className="text-xl font-bold">Usability (SUS)</h2>
-            <p className="num mt-2 text-4xl font-extrabold">{fmt(stats.sus.mean)}<span className="ml-2 text-base font-medium text-ink-soft">mean of {stats.sus.n}, SD {fmt(stats.sus.sd)}</span></p>
+            <p className="num mt-2 text-4xl font-bold">{fmt(stats.sus.mean)}<span className="ml-2 text-base font-medium text-ink-soft">mean of {stats.sus.n}, SD {fmt(stats.sus.sd)}</span></p>
             <svg viewBox="0 0 400 34" className="mt-3 w-full" role="img" aria-label="SUS scores on a 0 to 100 scale; 68 is the usual average">
               <rect x={0} y={10} width={400} height={8} rx={4} fill="#F4F6F8" />
               <line x1={272} x2={272} y1={4} y2={24} stroke="#8693A5" strokeDasharray="2 2" />

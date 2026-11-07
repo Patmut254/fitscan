@@ -4,11 +4,14 @@ Create a study account.
     python manage.py create_user anita --role researcher           # can collect, edit, export
     python manage.py create_user supervisor --role viewer          # read-only dashboard
     python manage.py create_user admin --role researcher --superuser  # also gets /admin/
+
+Passwords need at least 10 characters, can't be all numbers, and can't be a common password.
 """
 import getpass
 
 from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 
 
@@ -25,12 +28,26 @@ class Command(BaseCommand):
         User = get_user_model()
         if User.objects.filter(username=username).exists():
             raise CommandError(f"User {username} already exists")
-        if not password:
-            password = getpass.getpass("Password: ")
-            if password != getpass.getpass("Password (again): "):
-                raise CommandError("Passwords do not match")
         user = User(username=username, is_staff=superuser, is_superuser=superuser)
-        password_validation.validate_password(password, user)
+
+        if password:
+            try:
+                password_validation.validate_password(password, user)
+            except ValidationError as e:
+                raise CommandError(" ".join(e.messages))
+        else:
+            self.stdout.write("Password rules: at least 10 characters, not all numbers, not a common password.")
+            while True:
+                password = getpass.getpass("Password: ")
+                if password != getpass.getpass("Password (again): "):
+                    self.stderr.write("The two passwords don't match. Try again.")
+                    continue
+                try:
+                    password_validation.validate_password(password, user)
+                    break
+                except ValidationError as e:
+                    self.stderr.write(" ".join(e.messages) + " Try again.")
+
         user.set_password(password)
         user.save()
         user.groups.add(Group.objects.get(name="Researcher" if role == "researcher" else "Viewer"))

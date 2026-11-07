@@ -38,7 +38,7 @@ function EditForm({ rec, onDone }: { rec: FitRecord; onDone: (r: FitRecord | nul
     }
   }
   return (
-    <div className="space-y-3 rounded-xl border-2 border-tape bg-tape-light/40 p-4">
+    <div className="space-y-3 rounded-xl bg-tape-light/60 p-4">
       <h3 className="font-bold">Correct {rec.id}</h3>
       <p className="text-xs text-ink-soft">Scan values, sizes and calibration are not recalculated. Every change is logged with your reason.</p>
       <div className="grid grid-cols-2 gap-3">
@@ -86,9 +86,9 @@ function Detail({ id, canEdit, onClose, onChanged }: { id: string; canEdit: bool
 
   return (
     <aside className="fixed inset-0 z-40 flex justify-end bg-ink/30" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Record ${id}`}>
-      <div className="h-full w-full max-w-xl overflow-y-auto border-l border-grid bg-paper p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="h-full w-full max-w-xl overflow-y-auto bg-paper p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="num text-3xl font-extrabold" style={{ fontStretch: '120%' }}>{id}</h2>
+          <h2 className="num text-3xl font-bold">{id}</h2>
           <button className="btn-ghost btn-sm" onClick={onClose}>Close</button>
         </div>
         {!rec ? (
@@ -136,7 +136,7 @@ function Detail({ id, canEdit, onClose, onChanged }: { id: string; canEdit: bool
 
             <section className="sheet grid grid-cols-4 text-center">
               {[['They buy', rec.sizes.self], ['Tape', rec.sizes.tape?.size], ['Scan', rec.sizes.scanRaw?.size], ['Calibrated', rec.sizes.scanCal?.size]].map(([k, v]) => (
-                <div key={k}><div className="num text-2xl font-extrabold">{v ?? '–'}</div><div className="text-xs text-ink-soft">{k}</div></div>
+                <div key={k}><div className="num text-2xl font-bold">{v ?? '–'}</div><div className="text-xs text-ink-soft">{k}</div></div>
               ))}
             </section>
 
@@ -195,7 +195,7 @@ export function Records({ canEdit }: { canEdit: boolean }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-extrabold" style={{ fontStretch: '118%' }}>Records</h1>
+          <h1 className="text-3xl font-bold">Records</h1>
           <p className="text-ink-soft">{records ? `${records.length} saved. Select a row for the full record.` : 'Loading…'}</p>
         </div>
         <div className="flex flex-wrap gap-2">

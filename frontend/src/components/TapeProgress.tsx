@@ -15,7 +15,7 @@ export function TapeProgress({ step, id }: { step: number; id?: string }) {
         {id && <span className="num text-sm font-semibold text-ink-soft">{id}</span>}
       </div>
       <div className="relative h-9 overflow-hidden rounded-md border border-grid bg-paper-raised">
-        <div className="absolute inset-y-0 left-0 bg-tape transition-[width] duration-500 ease-out" style={{ width: `calc(${pct}% + ${step === n - 1 ? 0 : 6}px)` }} />
+        <div className="absolute inset-y-0 left-0 bg-tape transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
         <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox={`0 0 ${ticks} 36`} aria-hidden>
           {Array.from({ length: ticks + 1 }, (_, i) => {
             const major = i % 5 === 0;
