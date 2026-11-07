@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { login, type Me } from '../lib/api';
 import { Logo } from '../components/Logo';
+import { PasswordInput } from '../components/PasswordInput';
 
 export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
   const [username, setUsername] = useState('');
@@ -35,7 +36,7 @@ export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
         </div>
         <div>
           <label className="label" htmlFor="p">Password</label>
-          <input id="p" className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <PasswordInput id="p" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
         {error && <p className="note-err" role="alert">{error}</p>}
         <button className="btn-primary w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>

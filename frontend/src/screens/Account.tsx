@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { changePassword, type Me } from '../lib/api';
+import { PasswordInput } from '../components/PasswordInput';
 
 const ROLE_TEXT: Record<string, string> = {
   researcher: 'Researcher: can run sessions, edit records and export data.',
@@ -51,16 +52,16 @@ export function Account({ user, onSignOut }: { user: Me; onSignOut: () => void }
         <h2 className="text-xl font-bold">Change password</h2>
         <div>
           <label className="label" htmlFor="old">Current password</label>
-          <input id="old" className="input" type="password" autoComplete="current-password" value={oldPw} onChange={(e) => setOldPw(e.target.value)} required />
+          <PasswordInput id="old" autoComplete="current-password" value={oldPw} onChange={(e) => setOldPw(e.target.value)} required />
         </div>
         <div>
           <label className="label" htmlFor="new">New password</label>
-          <input id="new" className="input" type="password" autoComplete="new-password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required aria-describedby="pw-help" />
+          <PasswordInput id="new" autoComplete="new-password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required aria-describedby="pw-help" />
           <p id="pw-help" className="mt-1.5 text-xs text-ink-faint">At least 10 characters, not all numbers, not a common password.</p>
         </div>
         <div>
           <label className="label" htmlFor="confirm">Repeat new password</label>
-          <input id="confirm" className="input" type="password" autoComplete="new-password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required />
+          <PasswordInput id="confirm" autoComplete="new-password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required />
           {mismatch && <p className="mt-1.5 text-xs text-chalk">The two new passwords don't match.</p>}
         </div>
         {msg && <p className={msg.ok ? 'note-ok' : 'note-err'} role="status">{msg.text}</p>}
