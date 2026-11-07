@@ -21,8 +21,14 @@ server. Only derived numbers and landmark coordinates are stored.
 | **Viewer** (group), e.g. a supervisor | – | ✓ | – | ✓ | – | – |
 | **Superuser** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-Every user can change their own password under **Account**. Changing it signs that account out on other devices.
-Forgotten passwords are reset by a superuser in the admin site (`/admin/` → Users → the user → "Reset password").
+**Adding people (no commands needed):** an account that *manages the team* sees a **Team** page.
+There they click **Add a person**, enter a name and username, pick Researcher or Viewer, and get a
+temporary password to pass on. The new person must choose their own password the first time they sign in.
+The Team page also changes roles, resets forgotten passwords and switches accounts off. There is no public
+sign-up, so only people the admin adds can see the data. Participants never get accounts.
+
+Only the very first admin account is made with `python manage.py create_user NAME --role researcher --superuser`.
+Every user can change their own password under **Account**.
 
 ---
 

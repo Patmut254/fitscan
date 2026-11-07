@@ -22,9 +22,10 @@ const Scan = lazy(() => import('./screens/Scan').then((m) => ({ default: m.Scan 
 const Overview = lazy(() => import('./screens/data/Overview').then((m) => ({ default: m.Overview })));
 const Records = lazy(() => import('./screens/data/Records').then((m) => ({ default: m.Records })));
 const Activity = lazy(() => import('./screens/data/Activity').then((m) => ({ default: m.Activity })));
+const Team = lazy(() => import('./screens/data/Team').then((m) => ({ default: m.Team })));
 const CalibrationScreen = lazy(() => import('./screens/data/Calibration').then((m) => ({ default: m.Calibration })));
 
-type Tab = 'collect' | 'overview' | 'records' | 'activity' | 'calibration' | 'account';
+type Tab = 'collect' | 'overview' | 'records' | 'activity' | 'calibration' | 'team' | 'account';
 // Session steps: 0 Session · 1 Details · 2 Tape · 3 Scan · 4 Results · 5 Survey · 6 Saved
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -42,12 +43,13 @@ async function detectPhoneModel(): Promise<string> {
 
 const ROLE_LABEL: Record<string, string> = { researcher: 'Researcher', viewer: 'Viewer (read-only)', none: 'No access' };
 
-const NAV: { tab: Tab; label: string; researcherOnly?: boolean }[] = [
+const NAV: { tab: Tab; label: string; researcherOnly?: boolean; adminOnly?: boolean }[] = [
   { tab: 'collect', label: 'Collect', researcherOnly: true },
   { tab: 'overview', label: 'Overview' },
   { tab: 'records', label: 'Records' },
   { tab: 'activity', label: 'Activity' },
   { tab: 'calibration', label: 'Calibration' },
+  { tab: 'team', label: 'Team', adminOnly: true },
   { tab: 'account', label: 'Account' },
 ];
 
@@ -113,8 +115,22 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }, [step, tab]);
 
+  async function signOutNow() {
+    await logout();
+    setDraft(null);
+    setUser(null);
+  }
+
   if (user === undefined) return <div className="grid min-h-[100svh] place-items-center text-ink-faint">Loading…</div>;
   if (user === null) return <Login onSignedIn={setUser} />;
+  if (user.mustChangePassword)
+    return (
+      <div className="mx-auto max-w-lg px-4 py-10">
+        <Logo className="mb-6" />
+        <p className="note-warn mb-6">Welcome, {user.name}. Before you start, replace the temporary password you were given with one only you know.</p>
+        <Account user={user} firstTime onPasswordChanged={() => setUser({ ...user, mustChangePassword: false })} onSignOut={signOutNow} />
+      </div>
+    );
 
   async function signOut() {
     if (draft && step > 0 && step < 6 && !confirm(`Sign out and abandon ${draft.id}?`)) return;
@@ -151,7 +167,7 @@ export default function App() {
 
   // While the participant holds the phone (survey and thank-you), hide all navigation.
   const participantMode = tab === 'collect' && (step === 5 || step === 6);
-  const nav = NAV.filter((n) => !n.researcherOnly || isResearcher);
+  const nav = NAV.filter((n) => (!n.researcherOnly || isResearcher) && (!n.adminOnly || user.isSuperuser));
   const wide = tab !== 'collect' && tab !== 'account';
 
   return (
@@ -178,7 +194,7 @@ export default function App() {
             <div className="mt-auto rounded-lg bg-paper px-3 py-2.5 text-sm">
               <p className="text-ink-faint">Signed in as</p>
               <p className="font-semibold">{user.name}</p>
-              <p className="text-ink-soft">{ROLE_LABEL[user.role]}</p>
+              <p className="text-ink-soft">{ROLE_LABEL[user.role]}{user.isSuperuser && ', manages team'}</p>
             </div>
           </nav>
           {/* Phone top bar */}
@@ -222,6 +238,8 @@ export default function App() {
             <Activity />
           ) : tab === 'calibration' ? (
             <CalibrationScreen calibration={cal} canEdit={isResearcher} onChanged={refreshCalibration} />
+          ) : tab === 'team' && user.isSuperuser ? (
+            <Team me={user} />
           ) : tab === 'account' ? (
             <Account user={user} onSignOut={signOut} />
           ) : !draft ? (

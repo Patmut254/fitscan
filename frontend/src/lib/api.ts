@@ -12,6 +12,29 @@ export interface Me {
   name: string;
   role: Role;
   isSuperuser: boolean;
+  mustChangePassword: boolean;
+}
+
+export interface TeamMember {
+  username: string;
+  name: string;
+  role: Role;
+  isAdmin: boolean;
+  isActive: boolean;
+  mustChangePassword: boolean;
+  lastLogin: string | null;
+  dateJoined: string;
+}
+export const listTeam = () => req<TeamMember[]>('team');
+export const addTeamMember = (m: { username: string; name: string; password: string; role: 'researcher' | 'viewer'; isAdmin: boolean }) => post<TeamMember>('team', m);
+export const updateTeamMember = (username: string, changes: Partial<{ role: 'researcher' | 'viewer'; isAdmin: boolean; isActive: boolean; password: string; name: string }>) =>
+  req<TeamMember>(`team/${encodeURIComponent(username)}`, { method: 'PATCH', body: JSON.stringify(changes) });
+
+/** Readable temporary password, e.g. "Fit-7Kq4-mRw9". Easy to read out or write down. */
+export function makeTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const pick = (n: number) => Array.from(crypto.getRandomValues(new Uint32Array(n)), (x) => chars[x % chars.length]).join('');
+  return `Fit-${pick(4)}-${pick(4)}`;
 }
 
 let token: string | null = null;

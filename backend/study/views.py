@@ -11,13 +11,27 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import logic
-from .models import AuditEntry, CalibrationModel, Counter, Record, ReservedId
-from .permissions import StudyAccess, role_of
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+
+from .models import AuditEntry, CalibrationModel, Counter, Record, ReservedId, StudyProfile
+from .permissions import RESEARCHER_GROUP, VIEWER_GROUP, StudyAccess, TeamAdmin, role_of
 from .serializers import EDITABLE, ValidationError, from_api, to_api, to_summary, validate_edit_value
 
 
+def must_change(u):
+    p = StudyProfile.objects.filter(user=u).first()
+    return bool(p and p.must_change_password)
+
+
 def user_json(u):
-    return {"username": u.get_username(), "name": u.get_full_name() or u.get_username(), "role": role_of(u), "isSuperuser": u.is_superuser}
+    return {
+        "username": u.get_username(),
+        "name": u.get_full_name() or u.get_username(),
+        "role": role_of(u),
+        "isSuperuser": u.is_superuser,
+        "mustChangePassword": must_change(u),
+    }
 
 
 def bad(msg, code=status.HTTP_400_BAD_REQUEST):
@@ -83,6 +97,7 @@ class ChangePasswordView(APIView):
             return bad(" ".join(e.messages))
         user.set_password(new)
         user.save()
+        StudyProfile.objects.update_or_create(user=user, defaults={"must_change_password": False})
         Token.objects.filter(user=user).delete()
         token = Token.objects.create(user=user)
         AuditEntry.objects.create(action="password", by=user)
@@ -253,3 +268,112 @@ class CalibrationView(APIView):
             CalibrationModel.objects.create(version=data["version"], data=data, uploaded_by=request.user)
             AuditEntry.objects.create(action="calibration", by=request.user, reason=f"Activated {data['version']}")
         return Response({"calibration": data}, status=status.HTTP_201_CREATED)
+
+
+# ─── Team (study admin only) ────────────────────────────────────────────────────────────
+
+ROLE_GROUP = {"researcher": RESEARCHER_GROUP, "viewer": VIEWER_GROUP}
+
+
+def team_json(u):
+    return {
+        "username": u.get_username(),
+        "name": u.get_full_name(),
+        "role": role_of(u),
+        "isAdmin": u.is_superuser,
+        "isActive": u.is_active,
+        "mustChangePassword": must_change(u),
+        "lastLogin": u.last_login.isoformat() if u.last_login else None,
+        "dateJoined": u.date_joined.isoformat(),
+    }
+
+
+def _set_role(u, role):
+    u.groups.remove(*Group.objects.filter(name__in=ROLE_GROUP.values()))
+    u.groups.add(Group.objects.get(name=ROLE_GROUP[role]))
+
+
+def _check_password(pw, user):
+    try:
+        password_validation.validate_password(pw, user)
+    except DjangoValidationError as e:
+        raise ValidationError(" ".join(e.messages))
+
+
+class TeamView(APIView):
+    permission_classes = [TeamAdmin]
+
+    def get(self, request):
+        return Response([team_json(u) for u in get_user_model().objects.order_by("-is_active", "username")])
+
+    def post(self, request):
+        User = get_user_model()
+        d = request.data
+        username = (d.get("username") or "").strip()
+        role = d.get("role")
+        if not username or len(username) > 150 or not all(c.isalnum() or c in "@.+-_" for c in username):
+            return bad("Username can use letters, numbers and @ . + - _ only.")
+        if User.objects.filter(username__iexact=username).exists():
+            return bad(f"The username {username} is already taken.")
+        if role not in ROLE_GROUP:
+            return bad("Choose Researcher or Viewer.")
+        is_admin = bool(d.get("isAdmin"))
+        u = User(username=username, first_name=(d.get("name") or "").strip()[:150], is_staff=is_admin, is_superuser=is_admin)
+        try:
+            _check_password(d.get("password") or "", u)
+        except ValidationError as e:
+            return bad(str(e))
+        with transaction.atomic():
+            u.set_password(d["password"])
+            u.save()
+            _set_role(u, role)
+            StudyProfile.objects.create(user=u, must_change_password=True)
+            AuditEntry.objects.create(action="account", by=request.user, reason=f"Added {username} as {role}{' (admin)' if is_admin else ''}")
+        return Response(team_json(u), status=status.HTTP_201_CREATED)
+
+
+class TeamMemberView(APIView):
+    permission_classes = [TeamAdmin]
+
+    def patch(self, request, username):
+        u = get_user_model().objects.filter(username=username).first()
+        if not u:
+            return bad("Not found", status.HTTP_404_NOT_FOUND)
+        d = request.data
+        is_self = u.pk == request.user.pk
+        notes = []
+        try:
+            with transaction.atomic():
+                if "role" in d:
+                    if d["role"] not in ROLE_GROUP:
+                        raise ValidationError("Choose Researcher or Viewer.")
+                    _set_role(u, d["role"])
+                    notes.append(f"role to {d['role']}")
+                if "isAdmin" in d:
+                    if is_self and not d["isAdmin"]:
+                        raise ValidationError("You can't remove your own admin rights.")
+                    u.is_superuser = u.is_staff = bool(d["isAdmin"])
+                    notes.append("made admin" if d["isAdmin"] else "removed admin")
+                if "isActive" in d:
+                    if is_self and not d["isActive"]:
+                        raise ValidationError("You can't switch off your own account.")
+                    u.is_active = bool(d["isActive"])
+                    if not u.is_active:
+                        Token.objects.filter(user=u).delete()
+                    notes.append("switched on" if u.is_active else "switched off")
+                if d.get("password"):
+                    _check_password(d["password"], u)
+                    u.set_password(d["password"])
+                    Token.objects.filter(user=u).delete()
+                    StudyProfile.objects.update_or_create(user=u, defaults={"must_change_password": True})
+                    notes.append("password reset")
+                if "name" in d:
+                    u.first_name = (d.get("name") or "").strip()[:150]
+                    notes.append("name changed")
+                if not notes:
+                    raise ValidationError("No changes.")
+                u.save()
+                AuditEntry.objects.create(action="account", by=request.user, reason=f"{username}: {', '.join(notes)}")
+        except ValidationError as e:
+            return bad(str(e))
+        return Response(team_json(u))

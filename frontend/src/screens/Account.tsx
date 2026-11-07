@@ -8,7 +8,7 @@ const ROLE_TEXT: Record<string, string> = {
   none: 'No study access. Ask the admin to add you to the Researcher or Viewer group.',
 };
 
-export function Account({ user, onSignOut }: { user: Me; onSignOut: () => void }) {
+export function Account({ user, onSignOut, firstTime = false, onPasswordChanged }: { user: Me; onSignOut: () => void; firstTime?: boolean; onPasswordChanged?: () => void }) {
   const [oldPw, setOldPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
@@ -28,6 +28,7 @@ export function Account({ user, onSignOut }: { user: Me; onSignOut: () => void }
       setNewPw('');
       setConfirmPw('');
       setMsg({ ok: true, text: 'Password changed. You are still signed in here; other devices are signed out.' });
+      onPasswordChanged?.();
     } catch (err) {
       setMsg({ ok: false, text: (err as Error).message });
     } finally {
@@ -37,7 +38,7 @@ export function Account({ user, onSignOut }: { user: Me; onSignOut: () => void }
 
   return (
     <div className="max-w-lg space-y-6">
-      <section className="sheet">
+      {!firstTime && <section className="sheet">
         <p className="text-sm text-ink-soft">Signed in as</p>
         <h1 className="text-2xl font-bold">{user.name}</h1>
         <p className="mt-1 inline-block rounded-md bg-paper px-2 py-0.5 text-sm font-medium">{user.role === 'researcher' ? 'Researcher' : user.role === 'viewer' ? 'Viewer (read-only)' : 'No access'}</p>
@@ -47,12 +48,12 @@ export function Account({ user, onSignOut }: { user: Me; onSignOut: () => void }
             Open admin site (accounts and raw data)
           </a>
         )}
-      </section>
+      </section>}
 
       <form onSubmit={submit} className="sheet space-y-4">
-        <h2 className="text-xl font-bold">Change password</h2>
+        <h2 className="text-xl font-bold">{firstTime ? 'Choose your password' : 'Change password'}</h2>
         <div>
-          <label className="label" htmlFor="old">Current password</label>
+          <label className="label" htmlFor="old">{firstTime ? 'Temporary password you were given' : 'Current password'}</label>
           <PasswordInput id="old" autoComplete="current-password" value={oldPw} onChange={(e) => setOldPw(e.target.value)} required />
         </div>
         <div>

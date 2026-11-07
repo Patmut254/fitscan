@@ -16,4 +16,6 @@ urlpatterns = [
     path("stats", views.StatsView.as_view()),
     path("export", views.ExportView.as_view()),
     path("calibration", views.CalibrationView.as_view()),
+    path("team", views.TeamView.as_view()),
+    path("team/<str:username>", views.TeamMemberView.as_view()),
 ]

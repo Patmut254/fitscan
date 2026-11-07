@@ -24,3 +24,12 @@ class StudyAccess(BasePermission):
         if role == "researcher":
             return True
         return role == "viewer" and request.method in SAFE_METHODS
+
+
+class TeamAdmin(BasePermission):
+    """Only study admins (superusers) can add people, change roles or reset passwords."""
+
+    message = "Only the study admin can manage the team."
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)

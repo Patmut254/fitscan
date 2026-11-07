@@ -32,6 +32,7 @@
   .btn-ghost { @apply btn border border-grid bg-paper-raised text-ink hover:border-ink-faint; }
   .btn-sm { @apply min-h-[36px] px-3 text-sm; }
   .input { @apply w-full rounded-lg border border-grid bg-paper-raised px-3 py-3 text-base text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none focus:ring-0; }
+  select.input { padding-right: 2.5rem; }
   .label { @apply mb-1.5 block text-sm font-medium text-ink-soft; }
   .panel { @apply rounded-xl border border-grid bg-paper-raised; }
   .sheet { @apply panel p-5; }
