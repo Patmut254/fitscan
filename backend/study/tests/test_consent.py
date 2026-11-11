@@ -65,3 +65,12 @@ class ConsentTests(APITestCase):
         self.login("sup")
         self.assertNotIn("initials", self.client.get(f"/api/records/{pid}").data["consent"])
         self.assertEqual(self.client.get("/api/export?kind=consent").status_code, 403)
+
+    def test_app_payload_with_consent_method_is_accepted(self):
+        # The app sends consentMethod alongside the consent block (bug: "Fields not allowed: consentMethod").
+        self.login("Herbert")
+        pid = self.client.post("/api/participants/reserve").data["id"]
+        body = payload(pid, consent={"method": "paper"})
+        body["consentMethod"] = "paper"
+        r = self.client.post("/api/records", body, format="json")
+        self.assertEqual(r.status_code, 201, r.data)

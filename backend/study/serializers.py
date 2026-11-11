@@ -9,6 +9,7 @@ from .models import AGE_BANDS, CHART_CHOICES, SEX_CHOICES, Record
 ALLOWED_KEYS = {
     "id", "createdAt", "savedAt", "appVersion", "consentPaperSigned", "sex", "ageBand", "heightCm", "weightKg",
     "selfSize", "chart", "phoneModel", "tape", "tapeMean", "scan", "calibrated", "sizes", "sus", "consent",
+    "consentMethod",  # sent by the app; the stored method is taken from the consent block
 }
 SEXES = {s for s, _ in SEX_CHOICES}
 CHARTS = {c for c, _ in CHART_CHOICES}
